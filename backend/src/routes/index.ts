@@ -1,0 +1,18 @@
+import { Router } from "express";
+import authRoutes from "./auth.routes";
+import userRoutes from "./users.routes";
+import testRoutes from "./tests.routes";
+import questionRoutes from "./questions.routes";
+import attemptRoutes from "./attempts.routes";
+import analyticsRoutes from "./analytics.routes";
+
+const router = Router();
+
+router.use("/auth", authRoutes);
+router.use("/users", userRoutes);
+router.use("/tests", testRoutes);
+router.use("/questions", questionRoutes);
+router.use("/attempts", attemptRoutes);
+router.use("/analytics", analyticsRoutes);
+
+export default router;

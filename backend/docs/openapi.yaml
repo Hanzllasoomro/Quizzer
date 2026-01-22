@@ -1,0 +1,30 @@
+openapi: 3.0.3
+info:
+  title: Quiz App API
+  version: 1.0.0
+servers:
+  - url: /api/v1
+paths:
+  /auth/register:
+    post:
+      summary: Register user
+  /auth/login:
+    post:
+      summary: Login
+  /auth/refresh:
+    post:
+      summary: Refresh access token
+  /tests:
+    get:
+      summary: List tests
+    post:
+      summary: Create test (Admin)
+  /tests/{id}/generate-questions:
+    post:
+      summary: Generate questions (Admin)
+  /attempts:
+    post:
+      summary: Start attempt
+  /attempts/{id}/submit:
+    post:
+      summary: Submit attempt
