@@ -22,37 +22,39 @@ export default function AdminTestResultsPage() {
 
   return (
     <RequireRole roles={["ADMIN", "TEACHER"]}>
-      <div className="container">
+      <div className="page">
         <NavBar />
-        <div className="inline" style={{ justifyContent: "space-between", marginBottom: 12 }}>
-          <div>
-            <div className="page-title">Test Results</div>
-            <p className="muted">All attempts for this test</p>
-          </div>
-          <button className="btn btn-outline" type="button" onClick={() => globalThis.history.back()}>
-            Back
-          </button>
-        </div>
-
-        {error && <div className="alert alert-error">{error}</div>}
-
-        <div className="card stack">
-          {results.length === 0 && <p className="muted">No results yet.</p>}
-          {results.map((r) => (
-            <div key={r._id} className="question-card stack">
-              <div className="inline" style={{ justifyContent: "space-between" }}>
-                <strong>
-                  Student: {r.userId?.name || "Unknown"}
-                </strong>
-                <span className="badge">{r.status}</span>
-              </div>
-              <div className="muted">Email: {r.userId?.email || "-"}</div>
-              <div className="inline" style={{ gap: 16 }}>
-                <span>Score: {r.score}/{r.total}</span>
-                <span className="muted">Submitted: {r.submittedAt ? new Date(r.submittedAt).toLocaleString() : "-"}</span>
-              </div>
+        <div className="container dashboard">
+          <header className="page-header">
+            <div>
+              <h1>Test Results</h1>
+              <p className="muted">All attempts for this test</p>
             </div>
-          ))}
+            <button className="btn btn-ghost" type="button" onClick={() => globalThis.history.back()}>
+              Back
+            </button>
+          </header>
+
+          {error && <div className="alert alert-error">{error}</div>}
+
+          <div className="card section-card">
+            {results.length === 0 && <p className="muted">No results yet.</p>}
+            <div className="list">
+              {results.map((r) => (
+                <div key={r._id} className="list-row">
+                  <div>
+                    <h3>{r.userId?.name || "Unknown"}</h3>
+                    <p className="muted">Email: {r.userId?.email || "-"}</p>
+                    <p className="muted">Submitted: {r.submittedAt ? new Date(r.submittedAt).toLocaleString() : "-"}</p>
+                  </div>
+                  <div className="list-actions">
+                    <span className="pill">{r.status}</span>
+                    <strong>Score: {r.score}/{r.total}</strong>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
       </div>
     </RequireRole>

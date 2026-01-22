@@ -198,19 +198,20 @@ export default function ManageTestPage() {
 
   return (
     <RequireRole roles={["ADMIN", "TEACHER"]}>
-      <div className="container">
+      <div className="page">
         <NavBar />
-        <div className="inline" style={{ justifyContent: "space-between", marginBottom: 12 }}>
-          <div>
-            <div className="page-title">Manage Test</div>
-            <p className="muted">Update test details and status.</p>
-          </div>
-          <button className="btn btn-outline" type="button" onClick={() => globalThis.history.back()}>
-            Back
-          </button>
-        </div>
+        <div className="container dashboard">
+          <header className="page-header">
+            <div>
+              <h1>Manage Test</h1>
+              <p className="muted">Update test details, questions, and approvals.</p>
+            </div>
+            <button className="btn btn-ghost" type="button" onClick={() => globalThis.history.back()}>
+              Back
+            </button>
+          </header>
 
-        <div className="card stack">
+          <div className="card section-card">
           <div>
             <label className="label" htmlFor="manage-title">Title</label>
             <input id="manage-title" className="input" value={title} onChange={(e) => setTitle(e.target.value)} />
@@ -244,7 +245,7 @@ export default function ManageTestPage() {
           </div>
         </div>
 
-        <div className="card stack" style={{ marginTop: 16 }}>
+        <div className="card section-card">
           <h3>Question Bank Generation</h3>
           <p className="muted">Pull questions from your bank by difficulty.</p>
           <div className="grid grid-3">
@@ -268,7 +269,7 @@ export default function ManageTestPage() {
           <button className="btn btn-outline" onClick={onGenerateFromBank}>Generate</button>
         </div>
 
-        <div className="card stack" style={{ marginTop: 16 }}>
+        <div className="card section-card">
           <div className="inline" style={{ justifyContent: "space-between" }}>
             <h3>Pending AI Questions</h3>
             <button className="btn btn-outline" onClick={onApprovePending} disabled={!pendingQuestions.length}>
@@ -284,7 +285,7 @@ export default function ManageTestPage() {
           ))}
         </div>
 
-        <div className="card stack" style={{ marginTop: 16 }}>
+        <div className="card section-card">
           <h3>Add Question</h3>
           <div>
             <label className="label" htmlFor="new-question-text">Question</label>
@@ -327,7 +328,7 @@ export default function ManageTestPage() {
           <button className="btn btn-primary" onClick={onAddQuestion}>Add Question</button>
         </div>
 
-        <div className="card stack" style={{ marginTop: 16 }}>
+        <div className="card section-card">
           <h3>Test Questions</h3>
           {questions.length === 0 && <p className="muted">No questions added yet.</p>}
           {questions.map((q) => (
@@ -415,6 +416,7 @@ export default function ManageTestPage() {
             </div>
           ))}
         </div>
+      </div>
       </div>
     </RequireRole>
   );

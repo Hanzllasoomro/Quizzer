@@ -27,63 +27,73 @@ export default function AdminDashboard() {
 
   return (
     <RequireRole roles={["ADMIN", "TEACHER"]}>
-      <div className="container">
+      <div className="page">
         <NavBar />
-      <div className="inline" style={{ justifyContent: "space-between", marginBottom: 16 }}>
-        <div>
-          <div className="page-title">Admin Dashboard</div>
-          <p className="muted">Manage tests, questions, and results</p>
-        </div>
-        <Link className="btn btn-primary" href="/admin/tests/create">Create Test</Link>
-      </div>
+        <div className="container dashboard">
+          <header className="page-header">
+            <div>
+              <h1>Admin Dashboard</h1>
+              <p className="muted">Manage tests, questions, and results with clarity.</p>
+            </div>
+            <Link className="btn btn-primary" href="/admin/tests/create">Create Test</Link>
+          </header>
 
-      <div style={{ display: "grid", gridTemplateColumns: "260px 1fr", gap: 16 }}>
-        <div className="sidebar stack">
-          <strong>Quick Actions</strong>
-          <Link className="btn btn-outline" href="/admin/tests/create">Create Test</Link>
-          <Link className="btn btn-outline" href="/admin/dashboard#tests">Manage Tests</Link>
-          <Link className="btn btn-outline" href="/admin/dashboard#tests">Review Results</Link>
-        </div>
-
-        <div className="stack">
-          <div className="grid grid-3">
-            <div className="card stack">
+          <div className="stats-grid">
+            <div className="stat-card">
               <span className="muted">Total Tests</span>
-              <div className="stat-number">{tests.length}</div>
+              <strong>{tests.length}</strong>
             </div>
-            <div className="card stack">
+            <div className="stat-card">
               <span className="muted">Active Tests</span>
-              <div className="stat-number">
-                {tests.filter((t) => t.status === "ACTIVE").length}
-              </div>
+              <strong>{tests.filter((t) => t.status === "ACTIVE").length}</strong>
             </div>
-            <div className="card stack">
+            <div className="stat-card">
               <span className="muted">Drafts</span>
-              <div className="stat-number">
-                {tests.filter((t) => t.status === "DRAFT").length}
-              </div>
+              <strong>{tests.filter((t) => t.status === "DRAFT").length}</strong>
+            </div>
+            <div className="stat-card">
+              <span className="muted">Results Published</span>
+              <strong>—</strong>
             </div>
           </div>
 
-          <div id="tests" className="grid" style={{ marginTop: 12 }}>
-            {tests.map((t) => (
-              <div key={t._id} className="card stack">
-                <div className="inline" style={{ justifyContent: "space-between" }}>
-                  <h3>{t.title}</h3>
-                  <span className="badge">{t.status}</span>
-                </div>
-                <p className="muted">{t.subject} • {t.durationMinutes} mins</p>
-                <div className="actions">
-                  <Link className="btn btn-outline" href={`/tests/${t._id}`}>View / Take</Link>
-                  <Link className="btn btn-outline" href={`/admin/tests/${t._id}`}>Manage</Link>
-                  <Link className="btn btn-outline" href={`/admin/tests/${t._id}/results`}>View Results</Link>
-                  <button className="btn btn-danger-outline" onClick={() => deleteTest(t._id)}>Delete</button>
+          <div className="dashboard-grid admin-grid">
+            <aside className="card section-card">
+              <h2>Quick Actions</h2>
+              <div className="stack">
+                <Link className="btn btn-outline" href="/admin/tests/create">Create Test</Link>
+                <Link className="btn btn-outline" href="/admin/dashboard#tests">Manage Tests</Link>
+                <Link className="btn btn-outline" href="/admin/dashboard#tests">Review Results</Link>
+              </div>
+            </aside>
+
+            <section id="tests" className="card section-card">
+              <div className="section-header-row">
+                <div>
+                  <h2>All Tests</h2>
+                  <p className="muted">Review, edit, and monitor test status.</p>
                 </div>
               </div>
-            ))}
+              <div className="list">
+                {tests.map((t) => (
+                  <div key={t._id} className="list-row">
+                    <div>
+                      <h3>{t.title}</h3>
+                      <p className="muted">{t.subject} • {t.durationMinutes} mins</p>
+                    </div>
+                    <div className="list-actions">
+                      <span className="pill">{t.status}</span>
+                      <Link className="btn btn-ghost" href={`/tests/${t._id}`}>Preview</Link>
+                      <Link className="btn btn-outline" href={`/admin/tests/${t._id}`}>Manage</Link>
+                      <Link className="btn btn-ghost" href={`/admin/tests/${t._id}/results`}>Results</Link>
+                      <button className="btn btn-danger-outline" onClick={() => deleteTest(t._id)}>Delete</button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </section>
           </div>
         </div>
-      </div>
       </div>
     </RequireRole>
   );

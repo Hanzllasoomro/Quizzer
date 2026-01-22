@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
@@ -28,11 +28,6 @@ export function AuthSwitch({ initialMode = "login" }: Props) {
   const [signupMessage, setSignupMessage] = useState("");
 
   const router = useRouter();
-
-  const containerClassName = useMemo(
-    () => `auth-switch-container ${mode === "signup" ? "right-panel-active" : ""}`,
-    [mode]
-  );
 
   const startOAuth = (provider: "google" | "facebook" | "linkedin") => {
     globalThis.location.href = `${API_BASE}/auth/${provider}`;
@@ -82,72 +77,78 @@ export function AuthSwitch({ initialMode = "login" }: Props) {
   };
 
   return (
-    <div className="auth-switch-root">
-      <div className={containerClassName} id="container">
-        <div className="form-container sign-up-container">
-          <div className="auth-switch-form">
-            <h1>Create Account</h1>
-            <div className="social-container">
-              <button type="button" className="social" aria-label="Facebook" onClick={() => startOAuth("facebook")}>
-                <FontAwesomeIcon icon={faFacebookF} />
-              </button>
-              <button type="button" className="social" aria-label="Google" onClick={() => startOAuth("google")}>
-                <FontAwesomeIcon icon={faGoogle} />
-              </button>
-              <button type="button" className="social" aria-label="LinkedIn" onClick={() => startOAuth("linkedin")}>
-                <FontAwesomeIcon icon={faLinkedinIn} />
-              </button>
-            </div>
-            <span>or use your email for registration</span>
-            <input type="text" placeholder="Name" value={signupName} onChange={(e) => setSignupName(e.target.value)} />
-            <input type="email" placeholder="Email" value={signupEmail} onChange={(e) => setSignupEmail(e.target.value)} />
-            <input type="password" placeholder="Password" value={signupPassword} onChange={(e) => setSignupPassword(e.target.value)} />
-            {signupError && <div className="auth-switch-alert error">{signupError}</div>}
-            {signupMessage && <div className="auth-switch-alert success">{signupMessage}</div>}
-            <button type="button" onClick={onSignup}>Sign Up</button>
-            <Link className="auth-switch-link" href="/">Back to Home</Link>
+    <div className="auth-page">
+      <div className="auth-shell">
+        <div className="auth-brand">
+          <span className="nav-mark">Q</span>
+          <div>
+            <h2>Quiz App</h2>
+            <p className="muted">Secure, fair, smart online examinations.</p>
           </div>
         </div>
 
-        <div className="form-container sign-in-container">
-          <div className="auth-switch-form">
-            <h1>Sign in</h1>
-            <div className="social-container">
-              <button type="button" className="social" aria-label="Facebook" onClick={() => startOAuth("facebook")}>
-                <FontAwesomeIcon icon={faFacebookF} />
-              </button>
-              <button type="button" className="social" aria-label="Google" onClick={() => startOAuth("google")}>
-                <FontAwesomeIcon icon={faGoogle} />
-              </button>
-              <button type="button" className="social" aria-label="LinkedIn" onClick={() => startOAuth("linkedin")}>
-                <FontAwesomeIcon icon={faLinkedinIn} />
-              </button>
-            </div>
-            <span>or use your account</span>
-            <input type="email" placeholder="Email" value={loginEmail} onChange={(e) => setLoginEmail(e.target.value)} />
-            <input type="password" placeholder="Password" value={loginPassword} onChange={(e) => setLoginPassword(e.target.value)} />
-            <Link className="auth-switch-link" href="#">Forgot your password?</Link>
-            {loginError && <div className="auth-switch-alert error">{loginError}</div>}
-            <button type="button" onClick={onLogin} disabled={loginLoading}>
-              {loginLoading ? "Signing in..." : "Sign In"}
+        <div className="auth-card">
+          <div className="auth-tabs" role="tablist">
+            <button
+              type="button"
+              className={`auth-tab ${mode === "login" ? "active" : ""}`}
+              onClick={() => setMode("login")}
+              role="tab"
+              aria-selected={mode === "login"}
+            >
+              Sign In
             </button>
-            <Link className="auth-switch-link" href="/">Back to Home</Link>
+            <button
+              type="button"
+              className={`auth-tab ${mode === "signup" ? "active" : ""}`}
+              onClick={() => setMode("signup")}
+              role="tab"
+              aria-selected={mode === "signup"}
+            >
+              Create Account
+            </button>
           </div>
-        </div>
 
-        <div className="overlay-container">
-          <div className="overlay">
-            <div className="overlay-panel overlay-left">
-              <h1>Welcome Back!</h1>
-              <p>To keep connected with us please login with your personal info</p>
-              <button className="auth-switch-primary ghost" type="button" onClick={() => setMode("login")}>Sign In</button>
-            </div>
-            <div className="overlay-panel overlay-right">
-              <h1>Hello, Friend!</h1>
-              <p>Enter your personal details and start journey with us</p>
-              <button className="auth-switch-primary ghost" type="button" onClick={() => setMode("signup")}>Sign Up</button>
-            </div>
+          <div className="auth-socials">
+            <button type="button" className="social-btn" aria-label="Facebook" onClick={() => startOAuth("facebook")}>
+              <FontAwesomeIcon icon={faFacebookF} />
+            </button>
+            <button type="button" className="social-btn" aria-label="Google" onClick={() => startOAuth("google")}>
+              <FontAwesomeIcon icon={faGoogle} />
+            </button>
+            <button type="button" className="social-btn" aria-label="LinkedIn" onClick={() => startOAuth("linkedin")}>
+              <FontAwesomeIcon icon={faLinkedinIn} />
+            </button>
           </div>
+          <p className="auth-divider">or continue with email</p>
+
+          {mode === "login" ? (
+            <div className="auth-form">
+              <label className="label" htmlFor="login-email">Email</label>
+              <input id="login-email" className="input" type="email" placeholder="you@example.com" value={loginEmail} onChange={(e) => setLoginEmail(e.target.value)} />
+              <label className="label" htmlFor="login-password">Password</label>
+              <input id="login-password" className="input" type="password" placeholder="••••••••" value={loginPassword} onChange={(e) => setLoginPassword(e.target.value)} />
+              <Link className="auth-link" href="#">Forgot your password?</Link>
+              {loginError && <div className="alert alert-error">{loginError}</div>}
+              <button type="button" className="btn btn-primary" onClick={onLogin} disabled={loginLoading}>
+                {loginLoading ? "Signing in..." : "Sign In"}
+              </button>
+            </div>
+          ) : (
+            <div className="auth-form">
+              <label className="label" htmlFor="signup-name">Full Name</label>
+              <input id="signup-name" className="input" type="text" placeholder="Your name" value={signupName} onChange={(e) => setSignupName(e.target.value)} />
+              <label className="label" htmlFor="signup-email">Email</label>
+              <input id="signup-email" className="input" type="email" placeholder="you@example.com" value={signupEmail} onChange={(e) => setSignupEmail(e.target.value)} />
+              <label className="label" htmlFor="signup-password">Password</label>
+              <input id="signup-password" className="input" type="password" placeholder="Create a strong password" value={signupPassword} onChange={(e) => setSignupPassword(e.target.value)} />
+              {signupError && <div className="alert alert-error">{signupError}</div>}
+              {signupMessage && <div className="alert alert-success">{signupMessage}</div>}
+              <button type="button" className="btn btn-primary" onClick={onSignup}>Create Account</button>
+            </div>
+          )}
+
+          <Link className="auth-link" href="/">Back to Home</Link>
         </div>
       </div>
     </div>

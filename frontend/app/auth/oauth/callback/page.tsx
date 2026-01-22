@@ -38,10 +38,13 @@ export default function OAuthCallbackPage() {
   }, [accessToken, roleFromQuery, router]);
 
   return (
-    <div className="auth-wrapper">
-      <div className="auth-card stack">
-        <strong>Signing you in…</strong>
-        {error && <div className="alert alert-error">{error}</div>}
+    <div className="auth-page">
+      <div className="auth-shell">
+        <div className="auth-card">
+          <strong>Signing you in…</strong>
+          <p className="muted">Please wait while we complete your login.</p>
+          {error && <div className="alert alert-error">{error}</div>}
+        </div>
       </div>
     </div>
   );

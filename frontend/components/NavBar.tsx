@@ -12,26 +12,45 @@ export const NavBar = () => {
   }, []);
 
   return (
-    <div className="topbar">
-      <Link href="/" className="inline">
-        <strong>Quiz App</strong>
-      </Link>
-      <div className="actions">
+    <div className="nav">
+      <div className="nav-left">
+        <Link href="/" className="nav-logo">
+          <span className="nav-mark" aria-hidden>
+            Q
+          </span>
+          <span className="nav-title">Quiz App</span>
+        </Link>
+      </div>
+
+      <div className="nav-center">
+        <div className="nav-status" aria-live="polite">
+          <span className="status-dot" />
+          Exam in Progress
+          <span className="status-time">00:00:00</span>
+        </div>
+      </div>
+
+      <div className="nav-right">
         {!hasToken && (
-          <>
-            <Link href="/auth/login" className="btn btn-outline">
+          <div className="nav-actions">
+            <Link href="/auth/login" className="btn btn-ghost">
               Login
             </Link>
-            <Link href="/auth/signup" className="btn btn-outline">
-              Signup
+            <Link href="/auth/signup" className="btn btn-primary">
+              Get Started
             </Link>
-          </>
+          </div>
         )}
         {hasToken && (
-          <>
-            <span className="badge">Profile</span>
+          <div className="nav-actions">
+            <Link href="/student/dashboard" className="btn btn-ghost">
+              Dashboard
+            </Link>
+            <span className="nav-avatar" aria-label="Profile">
+              SA
+            </span>
             <button
-              className="btn btn-outline"
+              className="btn btn-ghost"
               onClick={() => {
                 clearToken();
                 globalThis.location.href = "/auth/login";
@@ -39,7 +58,7 @@ export const NavBar = () => {
             >
               Logout
             </button>
-          </>
+          </div>
         )}
       </div>
     </div>

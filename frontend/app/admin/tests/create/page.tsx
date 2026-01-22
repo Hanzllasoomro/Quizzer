@@ -156,15 +156,314 @@ export default function CreateTestPage() {
 
   return (
     <RequireRole roles={["ADMIN", "TEACHER"]}>
-      <div className="container">
+      <div className="page">
         <NavBar />
-      <div className="inline" style={{ justifyContent: "space-between", marginBottom: 12 }}>
-        <div>
-          <div className="page-title">Create Test</div>
-          <p className="muted">Configure the test and add questions</p>
+        <div className="container dashboard">
+          <header className="page-header">
+            <div>
+              <h1>Create Test</h1>
+              <p className="muted">Configure the test, generate questions, or add them manually.</p>
+            </div>
+            <button className="btn btn-ghost" type="button" onClick={() => globalThis.history.back()}>
+              Back
+            </button>
+          </header>
+
+          {error && <div className="alert alert-error">{error}</div>}
+          {message && <div className="alert alert-success">{message}</div>}
+
+          <div className="card section-card">
+            <h2>Test Details</h2>
+            <p className="muted">Basic information for the exam.</p>
+            <div className="form-grid">
+              <div>
+                <label className="label" htmlFor="test-title">Title</label>
+                <input id="test-title" className="input" value={title} onChange={(e) => setTitle(e.target.value)} />
+              </div>
+              <div>
+                <label className="label" htmlFor="test-subject">Subject</label>
+                <input id="test-subject" className="input" value={subject} onChange={(e) => setSubject(e.target.value)} />
+              </div>
+              <div>
+                <label className="label" htmlFor="test-duration">Duration (minutes)</label>
+                <input id="test-duration" className="input" type="number" value={durationMinutes} onChange={(e) => setDurationMinutes(Number(e.target.value))} />
+              </div>
+            </div>
+          </div>
+
+          <div className="card section-card">
+            <h2>AI Question Generation</h2>
+            <p className="muted">Upload a document to generate questions by difficulty.</p>
+            <input className="input" type="file" accept=".pdf,.docx,.txt" onChange={(e) => setFile(e.target.files?.[0] || null)} />
+            <div className="form-grid">
+              <div>
+                <label className="label" htmlFor="ai-easy">Easy</label>
+                <input id="ai-easy" className="input" type="number" value={easyCount} onChange={(e) => setEasyCount(Number(e.target.value))} />
+              </div>
+              <div>
+                <label className="label" htmlFor="ai-medium">Medium</label>
+                <input id="ai-medium" className="input" type="number" value={mediumCount} onChange={(e) => setMediumCount(Number(e.target.value))} />
+              </div>
+              <div>
+                <label className="label" htmlFor="ai-hard">Hard</label>
+                <input id="ai-hard" className="input" type="number" value={hardCount} onChange={(e) => setHardCount(Number(e.target.value))} />
+              </div>
+            </div>
+            <div className="actions">
+              <button className="btn btn-outline" onClick={onGenerateAI}>Generate AI Questions</button>
+            </div>
+          </div>
+
+          <div className="card section-card">
+            <div className="section-header-row">
+              <div>
+                <h2>Manual Question Builder</h2>
+                <p className="muted">Add questions manually if needed.</p>
+              </div>
+              <button className="btn btn-outline" type="button" onClick={addManualQuestion}>
+                Add Question
+              </button>
+            </div>
+            {manualQuestions.map((q, idx) => (
+              <div key={q.id} className="question-card stack">
+                <label className="label">Question {idx + 1}</label>
+                <input
+                  className="input"
+                  value={q.text}
+                  onChange={(e) => updateManualQuestionText(q.id, e.target.value)}
+                />
+                <div className="grid grid-2">
+                  {q.options.map((opt, i) => (
+                    <input
+                      key={`opt-${idx}-${i}`}
+                      className="input"
+                      placeholder={`Option ${i + 1}`}
+                      value={opt}
+                      onChange={(e) => updateManualQuestionOption(q.id, i, e.target.value)}
+                    />
+                  ))}
+                </div>
+                <div className="grid grid-2">
+                  <div>
+                    <label className="label">Difficulty</label>
+                    <select
+                      className="input"
+                      value={q.difficulty}
+                      onChange={(e) => updateManualQuestionDifficulty(q.id, e.target.value as any)}
+                    >
+                      <option value="EASY">EASY</option>
+                      <option value="MEDIUM">MEDIUM</option>
+                      <option value="HARD">HARD</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="label">Correct Option</label>
+                    <select
+                      className="input"
+                      value={q.correctIndex}
+                      onChange={(e) => updateManualQuestionCorrect(q.id, Number(e.target.value))}
+                    >
+                      <option value={0}>Option 1</option>
+                      <option value={1}>Option 2</option>
+                      <option value={2}>Option 3</option>
+                      <option value={3}>Option 4</option>
+                    </select>
+                  </div>
+                </div>
+                <button
+                  className="btn btn-danger-outline"
+                  type="button"
+                  onClick={() => removeManualQuestion(q.id)}
+                >
+                  Remove Question
+                </button>
+              </div>
+            ))}
+          </div>
+
+          <div className="actions">
+            <button className="btn btn-primary" onClick={onCreate}>Save Test</button>
+            <button className="btn btn-outline" type="button" onClick={onPublish}>
+              Publish Test
+            </button>
+          </div>
         </div>
-        <button className="btn btn-outline" type="button" onClick={() => globalThis.history.back()}>
-          Back
+      </div>
+    </RequireRole>
+  );
+}"use client";
+
+import { useState } from "react";
+import { apiFetch, API_BASE } from "../../../../lib/api";
+import { NavBar } from "../../../../components/NavBar";
+import { RequireRole } from "../../../../components/RequireRole";
+
+export default function CreateTestPage() {
+  const [title, setTitle] = useState("");
+  const [subject, setSubject] = useState("");
+  const [durationMinutes, setDurationMinutes] = useState(30);
+  const [message, setMessage] = useState("");
+  const [error, setError] = useState("");
+  const [testId, setTestId] = useState<string>("");
+  const [file, setFile] = useState<File | null>(null);
+      <div className="page">
+        <NavBar />
+        <div className="container dashboard">
+          <header className="page-header">
+            <div>
+              <h1>Create Test</h1>
+              <p className="muted">Configure the test, generate questions, or add them manually.</p>
+            </div>
+            <button className="btn btn-ghost" type="button" onClick={() => globalThis.history.back()}>
+              Back
+            </button>
+          </header>
+
+          {error && <div className="alert alert-error">{error}</div>}
+          {message && <div className="alert alert-success">{message}</div>}
+
+          <div className="card section-card">
+            <h2>Test Details</h2>
+            <p className="muted">Basic information for the exam.</p>
+            <div className="form-grid">
+              <div>
+        return (
+          <RequireRole roles={["ADMIN", "TEACHER"]}>
+            <div className="page">
+              <NavBar />
+              <div className="container dashboard">
+                <header className="page-header">
+                  <div>
+                    <h1>Create Test</h1>
+                    <p className="muted">Configure the test, generate questions, or add them manually.</p>
+                  </div>
+                  <button className="btn btn-ghost" type="button" onClick={() => globalThis.history.back()}>
+                    Back
+                  </button>
+                </header>
+
+                {error && <div className="alert alert-error">{error}</div>}
+                {message && <div className="alert alert-success">{message}</div>}
+
+                <div className="card section-card">
+                  <h2>Test Details</h2>
+                  <p className="muted">Basic information for the exam.</p>
+                  <div className="form-grid">
+                    <div>
+                      <label className="label" htmlFor="test-title">Title</label>
+                      <input id="test-title" className="input" value={title} onChange={(e) => setTitle(e.target.value)} />
+                    </div>
+                    <div>
+                      <label className="label" htmlFor="test-subject">Subject</label>
+                      <input id="test-subject" className="input" value={subject} onChange={(e) => setSubject(e.target.value)} />
+                    </div>
+                    <div>
+                      <label className="label" htmlFor="test-duration">Duration (minutes)</label>
+                      <input id="test-duration" className="input" type="number" value={durationMinutes} onChange={(e) => setDurationMinutes(Number(e.target.value))} />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="card section-card">
+                  <h2>AI Question Generation</h2>
+                  <p className="muted">Upload a document to generate questions by difficulty.</p>
+                  <input className="input" type="file" accept=".pdf,.docx,.txt" onChange={(e) => setFile(e.target.files?.[0] || null)} />
+                  <div className="form-grid">
+                    <div>
+                      <label className="label" htmlFor="ai-easy">Easy</label>
+                      <input id="ai-easy" className="input" type="number" value={easyCount} onChange={(e) => setEasyCount(Number(e.target.value))} />
+                    </div>
+                    <div>
+                      <label className="label" htmlFor="ai-medium">Medium</label>
+                      <input id="ai-medium" className="input" type="number" value={mediumCount} onChange={(e) => setMediumCount(Number(e.target.value))} />
+                    </div>
+                    <div>
+                      <label className="label" htmlFor="ai-hard">Hard</label>
+                      <input id="ai-hard" className="input" type="number" value={hardCount} onChange={(e) => setHardCount(Number(e.target.value))} />
+                    </div>
+                  </div>
+                  <div className="actions">
+                    <button className="btn btn-outline" onClick={onGenerateAI}>Generate AI Questions</button>
+                  </div>
+                </div>
+
+                <div className="card section-card">
+                  <div className="section-header-row">
+                    <div>
+                      <h2>Manual Question Builder</h2>
+                      <p className="muted">Add questions manually if needed.</p>
+                    </div>
+                    <button className="btn btn-outline" type="button" onClick={addManualQuestion}>
+                      Add Question
+                    </button>
+                  </div>
+                  {manualQuestions.map((q, idx) => (
+                    <div key={q.id} className="question-card stack">
+                      <label className="label">Question {idx + 1}</label>
+                      <input
+                        className="input"
+                        value={q.text}
+                        onChange={(e) => updateManualQuestionText(q.id, e.target.value)}
+                      />
+                      <div className="grid grid-2">
+                        {q.options.map((opt, i) => (
+                          <input
+                            key={`opt-${idx}-${i}`}
+                            className="input"
+                            placeholder={`Option ${i + 1}`}
+                            value={opt}
+                            onChange={(e) => updateManualQuestionOption(q.id, i, e.target.value)}
+                          />
+                        ))}
+                      </div>
+                      <div className="grid grid-2">
+                        <div>
+                          <label className="label">Difficulty</label>
+                          <select
+                            className="input"
+                            value={q.difficulty}
+                            onChange={(e) => updateManualQuestionDifficulty(q.id, e.target.value as any)}
+                          >
+                            <option value="EASY">EASY</option>
+                            <option value="MEDIUM">MEDIUM</option>
+                            <option value="HARD">HARD</option>
+                          </select>
+                        </div>
+                        <div>
+                          <label className="label">Correct Option</label>
+                          <select
+                            className="input"
+                            value={q.correctIndex}
+                            onChange={(e) => updateManualQuestionCorrect(q.id, Number(e.target.value))}
+                          >
+                            <option value={0}>Option 1</option>
+                            <option value={1}>Option 2</option>
+                            <option value={2}>Option 3</option>
+                            <option value={3}>Option 4</option>
+                          </select>
+                        </div>
+                      </div>
+                      <button
+                        className="btn btn-danger-outline"
+                        type="button"
+                        onClick={() => removeManualQuestion(q.id)}
+                      >
+                        Remove Question
+                      </button>
+                    </div>
+                  ))}
+                </div>
+
+                <div className="actions">
+                  <button className="btn btn-primary" onClick={onCreate}>Save Test</button>
+                  <button className="btn btn-outline" type="button" onClick={onPublish}>
+                    Publish Test
+                  </button>
+                </div>
+              </div>
+            </div>
+          </RequireRole>
+        );
         </button>
       </div>
 
