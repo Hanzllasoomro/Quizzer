@@ -1,20 +1,21 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { apiFetch, setToken } from "../../../../lib/api";
+import { useToast } from "../../../../components/ToastProvider";
 
 export default function OAuthCallbackPage() {
   const searchParams = useSearchParams();
   const router = useRouter();
-  const [error, setError] = useState("");
+  const { show } = useToast();
 
   const accessToken = useMemo(() => searchParams.get("accessToken") || "", [searchParams]);
   const roleFromQuery = useMemo(() => searchParams.get("role") || "", [searchParams]);
 
   useEffect(() => {
     if (!accessToken) {
-      setError("Missing access token");
+      show("Missing access token", "error");
       return;
     }
     setToken(accessToken);
@@ -33,9 +34,9 @@ export default function OAuthCallbackPage() {
     };
 
     go().catch((e: any) => {
-      setError(e.message || "OAuth login failed");
+      show(e.message || "OAuth login failed", "error");
     });
-  }, [accessToken, roleFromQuery, router]);
+  }, [accessToken, roleFromQuery, router, show]);
 
   return (
     <div className="auth-page">
@@ -43,7 +44,6 @@ export default function OAuthCallbackPage() {
         <div className="auth-card">
           <strong>Signing you in…</strong>
           <p className="muted">Please wait while we complete your login.</p>
-          {error && <div className="alert alert-error">{error}</div>}
         </div>
       </div>
     </div>

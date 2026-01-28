@@ -5,20 +5,20 @@ import { useParams } from "next/navigation";
 import { apiFetch } from "../../../../../lib/api";
 import { NavBar } from "../../../../../components/NavBar";
 import { RequireRole } from "../../../../../components/RequireRole";
+import { useToast } from "../../../../../components/ToastProvider";
 
 export default function AdminTestResultsPage() {
   const params = useParams();
   const id = params?.id as string;
   const [results, setResults] = useState<any[]>([]);
-  const [error, setError] = useState("");
+  const { show } = useToast();
 
   useEffect(() => {
     if (!id) return;
-    setError("");
     apiFetch<any[]>(`/analytics/tests/${id}/results`)
       .then((res) => setResults(res.data || []))
-      .catch((e: any) => setError(e.message || "Failed to load results"));
-  }, [id]);
+      .catch((e: any) => show(e.message || "Failed to load results", "error"));
+  }, [id, show]);
 
   return (
     <RequireRole roles={["ADMIN", "TEACHER"]}>
@@ -34,8 +34,6 @@ export default function AdminTestResultsPage() {
               Back
             </button>
           </header>
-
-          {error && <div className="alert alert-error">{error}</div>}
 
           <div className="card section-card">
             {results.length === 0 && <p className="muted">No results yet.</p>}

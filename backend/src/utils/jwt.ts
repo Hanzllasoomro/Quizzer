@@ -7,16 +7,30 @@ export type JwtPayload = {
   jti?: string;
 };
 
+const getAccessExpiresIn = (role?: string) => {
+  if (role === "ADMIN" && config.jwt.adminAccessExpiresIn) {
+    return config.jwt.adminAccessExpiresIn;
+  }
+  return config.jwt.accessExpiresIn;
+};
+
+const getRefreshExpiresIn = (role?: string) => {
+  if (role === "ADMIN" && config.jwt.adminRefreshExpiresIn) {
+    return config.jwt.adminRefreshExpiresIn;
+  }
+  return config.jwt.refreshExpiresIn;
+};
+
 export const signAccessToken = (payload: JwtPayload) => {
   const options: SignOptions = {
-    expiresIn: config.jwt.accessExpiresIn as SignOptions["expiresIn"]
+    expiresIn: getAccessExpiresIn(payload.role) as SignOptions["expiresIn"]
   };
   return jwt.sign(payload, config.jwt.accessSecret as Secret, options);
 };
 
 export const signRefreshToken = (payload: JwtPayload) => {
   const options: SignOptions = {
-    expiresIn: config.jwt.refreshExpiresIn as SignOptions["expiresIn"]
+    expiresIn: getRefreshExpiresIn(payload.role) as SignOptions["expiresIn"]
   };
   return jwt.sign(payload, config.jwt.refreshSecret as Secret, options);
 };

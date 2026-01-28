@@ -1,15 +1,43 @@
 "use client";
 
 import Link from "next/link";
-import { clearToken } from "../lib/api";
+import { apiFetch, clearToken } from "../lib/api";
 import { useEffect, useState } from "react";
+import { usePathname } from "next/navigation";
 
 export const NavBar = () => {
-  const [hasToken, setHasToken] = useState(false);
+  const pathname = usePathname();
+  const [mounted, setMounted] = useState(false);
+  const [hasToken, setHasToken] = useState(() => {
+    if (globalThis.window === undefined) return false;
+    return !!globalThis.localStorage.getItem("accessToken");
+  });
+  const [dashboardPath, setDashboardPath] = useState("/student/dashboard");
 
   useEffect(() => {
-    setHasToken(!!globalThis.localStorage?.getItem("accessToken"));
-  }, []);
+    setMounted(true);
+    const readToken = () => setHasToken(!!globalThis.localStorage?.getItem("accessToken"));
+    readToken();
+    const onStorage = (event: StorageEvent) => {
+      if (event.key === "accessToken") readToken();
+    };
+    globalThis.addEventListener("storage", onStorage);
+    return () => globalThis.removeEventListener("storage", onStorage);
+  }, [pathname]);
+
+  useEffect(() => {
+    if (!hasToken) return;
+    apiFetch<{ role: string }>("/users/me")
+      .then((res) => {
+        const role = res.data?.role || "USER";
+        if (role === "ADMIN" || role === "TEACHER") {
+          setDashboardPath("/admin/dashboard");
+        } else {
+          setDashboardPath("/student/dashboard");
+        }
+      })
+      .catch(() => setDashboardPath("/student/dashboard"));
+  }, [hasToken]);
 
   return (
     <div className="nav">
@@ -31,7 +59,7 @@ export const NavBar = () => {
       </div>
 
       <div className="nav-right">
-        {!hasToken && (
+        {mounted && !hasToken && (
           <div className="nav-actions">
             <Link href="/auth/login" className="btn btn-ghost">
               Login
@@ -41,9 +69,9 @@ export const NavBar = () => {
             </Link>
           </div>
         )}
-        {hasToken && (
+        {mounted && hasToken && (
           <div className="nav-actions">
-            <Link href="/student/dashboard" className="btn btn-ghost">
+            <Link href={dashboardPath} className="btn btn-ghost">
               Dashboard
             </Link>
             <span className="nav-avatar" aria-label="Profile">

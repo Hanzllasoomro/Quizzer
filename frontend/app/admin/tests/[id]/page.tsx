@@ -5,6 +5,7 @@ import { useParams } from "next/navigation";
 import { apiFetch } from "../../../../lib/api";
 import { NavBar } from "../../../../components/NavBar";
 import { RequireRole } from "../../../../components/RequireRole";
+import { useToast } from "../../../../components/ToastProvider";
 
 export default function ManageTestPage() {
   const params = useParams();
@@ -13,8 +14,6 @@ export default function ManageTestPage() {
   const [subject, setSubject] = useState("");
   const [durationMinutes, setDurationMinutes] = useState(30);
   const [status, setStatus] = useState<"DRAFT" | "ACTIVE" | "ARCHIVED">("DRAFT");
-  const [message, setMessage] = useState("");
-  const [error, setError] = useState("");
   const [questions, setQuestions] = useState<any[]>([]);
   const [pendingQuestions, setPendingQuestions] = useState<any[]>([]);
   const [editingQuestionId, setEditingQuestionId] = useState<string | null>(null);
@@ -35,10 +34,10 @@ export default function ManageTestPage() {
     difficulty: "EASY",
     count: 1
   });
+  const { show } = useToast();
 
   useEffect(() => {
     if (!id) return;
-    setError("");
     apiFetch<any>(`/tests/${id}`)
       .then((res) => {
         setTitle(res.data?.title || "");
@@ -47,8 +46,8 @@ export default function ManageTestPage() {
         setStatus(res.data?.status || "DRAFT");
         setBankGenerate((prev) => ({ ...prev, subject: res.data?.subject || "" }));
       })
-      .catch((e: any) => setError(e.message || "Failed to load test"));
-  }, [id]);
+      .catch((e: any) => show(e.message || "Failed to load test", "error"));
+  }, [id, show]);
 
   const loadQuestions = async () => {
     if (!id) return;
@@ -63,34 +62,29 @@ export default function ManageTestPage() {
   }, [id]);
 
   const onSave = async () => {
-    setError("");
-    setMessage("");
     try {
       await apiFetch(`/tests/${id}`, {
         method: "PATCH",
         body: JSON.stringify({ title, subject, durationMinutes, status })
       });
-      setMessage("Test updated successfully");
+      show("Test updated successfully", "success");
     } catch (e: any) {
-      setError(e.message);
+      show(e.message || "Failed to update test", "error");
     }
   };
 
   const onDelete = async () => {
     if (!globalThis.confirm("Delete this test?")) return;
-    setError("");
-    setMessage("");
     try {
       await apiFetch(`/tests/${id}`, { method: "DELETE" });
+      show("Test deleted successfully", "success");
       globalThis.location.href = "/admin/dashboard";
     } catch (e: any) {
-      setError(e.message);
+      show(e.message || "Failed to delete test", "error");
     }
   };
 
   const onAddQuestion = async () => {
-    setError("");
-    setMessage("");
     try {
       await apiFetch("/questions", {
         method: "POST",
@@ -104,29 +98,25 @@ export default function ManageTestPage() {
           isBank: false
         })
       });
-      setMessage("Question added");
+      show("Question added", "success");
       setNewQuestion({ text: "", options: ["", "", "", ""], correctIndex: 0, difficulty: "EASY" });
       await loadQuestions();
     } catch (e: any) {
-      setError(e.message);
+      show(e.message || "Failed to add question", "error");
     }
   };
 
   const onDeleteQuestion = async (questionId: string) => {
-    setError("");
-    setMessage("");
     try {
       await apiFetch(`/questions/${questionId}`, { method: "DELETE" });
-      setMessage("Question deleted");
+      show("Question deleted", "success");
       await loadQuestions();
     } catch (e: any) {
-      setError(e.message);
+      show(e.message || "Failed to delete question", "error");
     }
   };
 
   const onGenerateFromBank = async () => {
-    setError("");
-    setMessage("");
     try {
       await apiFetch(`/tests/${id}/generate-questions`, {
         method: "POST",
@@ -136,10 +126,10 @@ export default function ManageTestPage() {
           count: bankGenerate.count
         })
       });
-      setMessage("Questions generated from bank");
+      show("Questions generated from bank", "success");
       await loadQuestions();
     } catch (e: any) {
-      setError(e.message);
+      show(e.message || "Failed to generate questions", "error");
     }
   };
 
@@ -160,8 +150,6 @@ export default function ManageTestPage() {
 
   const onSaveEditQuestion = async () => {
     if (!editingQuestionId) return;
-    setError("");
-    setMessage("");
     try {
       await apiFetch(`/questions/${editingQuestionId}`, {
         method: "PATCH",
@@ -172,27 +160,38 @@ export default function ManageTestPage() {
           difficulty: editQuestion.difficulty
         })
       });
-      setMessage("Question updated");
+      show("Question updated", "success");
       setEditingQuestionId(null);
       await loadQuestions();
     } catch (e: any) {
-      setError(e.message);
+      show(e.message || "Failed to update question", "error");
     }
   };
 
   const onApprovePending = async () => {
     if (!pendingQuestions.length) return;
-    setError("");
-    setMessage("");
     try {
       await apiFetch(`/tests/${id}/ai-questions/approve`, {
         method: "POST",
         body: JSON.stringify({ questionIds: pendingQuestions.map((q) => q._id) })
       });
-      setMessage("Pending AI questions approved");
+      show("Pending AI questions approved", "success");
       await loadQuestions();
     } catch (e: any) {
-      setError(e.message);
+      show(e.message || "Failed to approve questions", "error");
+    }
+  };
+
+  const onApproveQuestion = async (questionId: string) => {
+    try {
+      await apiFetch(`/tests/${id}/ai-questions/approve`, {
+        method: "POST",
+        body: JSON.stringify({ questionIds: [questionId] })
+      });
+      show("Question approved", "success");
+      await loadQuestions();
+    } catch (e: any) {
+      show(e.message || "Failed to approve question", "error");
     }
   };
 
@@ -232,9 +231,6 @@ export default function ManageTestPage() {
               <option value="ARCHIVED">ARCHIVED</option>
             </select>
           </div>
-
-          {error && <div className="alert alert-error">{error}</div>}
-          {message && <div className="alert alert-success">{message}</div>}
 
           <div className="actions">
             <button className="btn btn-primary" onClick={onSave}>Save Changes</button>
@@ -279,8 +275,88 @@ export default function ManageTestPage() {
           {pendingQuestions.length === 0 && <p className="muted">No pending questions.</p>}
           {pendingQuestions.map((q) => (
             <div key={q._id} className="question-card stack">
-              <strong>{q.text}</strong>
-              <div className="muted">{q.difficulty}</div>
+              {editingQuestionId === q._id ? (
+                <div className="stack">
+                  <div>
+                    <label className="label" htmlFor={`edit-pending-text-${q._id}`}>Question</label>
+                    <input
+                      id={`edit-pending-text-${q._id}`}
+                      className="input"
+                      value={editQuestion.text}
+                      onChange={(e) => setEditQuestion({ ...editQuestion, text: e.target.value })}
+                    />
+                  </div>
+                  <div className="grid grid-2">
+                    {editQuestion.options.map((opt, i) => (
+                      <input
+                        key={`edit-pending-opt-${q._id}-${i}`}
+                        className="input"
+                        placeholder={`Option ${i + 1}`}
+                        value={opt}
+                        onChange={(e) => {
+                          const next = [...editQuestion.options];
+                          next[i] = e.target.value;
+                          setEditQuestion({ ...editQuestion, options: next });
+                        }}
+                      />
+                    ))}
+                  </div>
+                  <div className="grid grid-2">
+                    <div>
+                      <label className="label" htmlFor={`edit-pending-difficulty-${q._id}`}>Difficulty</label>
+                      <select
+                        id={`edit-pending-difficulty-${q._id}`}
+                        className="input"
+                        value={editQuestion.difficulty}
+                        onChange={(e) => setEditQuestion({ ...editQuestion, difficulty: e.target.value as any })}
+                      >
+                        <option value="EASY">EASY</option>
+                        <option value="MEDIUM">MEDIUM</option>
+                        <option value="HARD">HARD</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="label" htmlFor={`edit-pending-correct-${q._id}`}>Correct Index</label>
+                      <select
+                        id={`edit-pending-correct-${q._id}`}
+                        className="input"
+                        value={editQuestion.correctIndex}
+                        onChange={(e) => setEditQuestion({ ...editQuestion, correctIndex: Number(e.target.value) })}
+                      >
+                        <option value={0}>Option 1</option>
+                        <option value={1}>Option 2</option>
+                        <option value={2}>Option 3</option>
+                        <option value={3}>Option 4</option>
+                      </select>
+                    </div>
+                  </div>
+                  <div className="actions">
+                    <button className="btn btn-primary" onClick={onSaveEditQuestion}>Save</button>
+                    <button className="btn btn-outline" type="button" onClick={onCancelEditQuestion}>Cancel</button>
+                  </div>
+                </div>
+              ) : (
+                <>
+                  <div className="inline" style={{ justifyContent: "space-between" }}>
+                    <strong>{q.text}</strong>
+                    <span className="badge">{q.difficulty}</span>
+                  </div>
+                  <div className="grid grid-2">
+                    {q.options?.map((opt: string, i: number) => (
+                      <div key={`${q._id}-pending-${i}`} className={i === q.correctIndex ? "" : "muted"}>
+                        {i + 1}. {opt} {i === q.correctIndex ? "(Correct)" : ""}
+                      </div>
+                    ))}
+                  </div>
+                  <div className="muted">Correct Answer: {q.options?.[q.correctIndex] || "N/A"}</div>
+                  <div className="actions">
+                    <button className="btn btn-outline" type="button" onClick={() => onStartEditQuestion(q)}>Edit</button>
+                    <button className="btn btn-primary" type="button" onClick={() => onApproveQuestion(q._id)}>
+                      Approve
+                    </button>
+                  </div>
+                </>
+              )}
             </div>
           ))}
         </div>

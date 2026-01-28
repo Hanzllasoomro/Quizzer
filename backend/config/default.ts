@@ -11,7 +11,9 @@ export const defaultConfig = {
     accessSecret: process.env.JWT_ACCESS_SECRET || "change_me",
     refreshSecret: process.env.JWT_REFRESH_SECRET || "change_me",
     accessExpiresIn: process.env.JWT_ACCESS_EXPIRES_IN || "5d",
-    refreshExpiresIn: process.env.JWT_REFRESH_EXPIRES_IN || "30d"
+    refreshExpiresIn: process.env.JWT_REFRESH_EXPIRES_IN || "30d",
+    adminAccessExpiresIn: process.env.JWT_ADMIN_ACCESS_EXPIRES_IN || "30d",
+    adminRefreshExpiresIn: process.env.JWT_ADMIN_REFRESH_EXPIRES_IN || "90d"
   },
   admin: {
     email: process.env.ADMIN_EMAIL || "admin@gmail.com",

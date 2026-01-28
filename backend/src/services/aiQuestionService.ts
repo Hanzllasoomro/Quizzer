@@ -9,6 +9,17 @@ export type AiQuestion = {
   difficulty: "EASY" | "MEDIUM" | "HARD";
 };
 
+const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
+const isRetryableError = (error: any) => {
+  const message = String(error?.message || "");
+  return (
+    message.includes("503") ||
+    message.includes("overloaded") ||
+    message.includes("fetch failed")
+  );
+};
+
 const buildPrompt = (
   subject: string,
   text: string,
@@ -59,9 +70,22 @@ export const generateQuestionsFromText = async (
   const trimmed = text.slice(0, 12000);
   const prompt = buildPrompt(subject, trimmed, counts);
 
-  const result = await model.generateContent(prompt);
-  const response = await result.response;
-  const output = response.text();
+  let output = "";
+  const maxAttempts = 3;
+  for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
+    try {
+      const result = await model.generateContent(prompt);
+      const response = await result.response;
+      output = response.text();
+      break;
+    } catch (error: any) {
+      if (!isRetryableError(error) || attempt === maxAttempts) {
+        throw new ApiError(503, "AI service temporarily unavailable", { cause: error?.message });
+      }
+      const delayMs = 500 * attempt * attempt;
+      await sleep(delayMs);
+    }
+  }
 
   let parsed: any;
   try {

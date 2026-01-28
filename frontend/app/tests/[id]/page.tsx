@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useParams } from "next/navigation";
 import { apiFetch } from "../../../lib/api";
 import { NavBar } from "../../../components/NavBar";
+import { useToast } from "../../../components/ToastProvider";
 
 export default function TakeTestPage() {
   const params = useParams();
@@ -14,15 +15,14 @@ export default function TakeTestPage() {
   const [attemptId, setAttemptId] = useState<string>("");
   const [secondsLeft, setSecondsLeft] = useState<number>(0);
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [error, setError] = useState<string>("");
   const [role, setRole] = useState<string>("");
   const [marked, setMarked] = useState<Record<string, boolean>>({});
   const [visited, setVisited] = useState<Record<string, boolean>>({});
   const submittedRef = useRef(false);
+  const { show } = useToast();
 
   useEffect(() => {
     if (!id) return;
-    setError("");
     apiFetch<{ role: string }>("/users/me")
       .then((res) => setRole(res.data?.role || ""))
       .catch(() => setRole(""));
@@ -31,7 +31,7 @@ export default function TakeTestPage() {
         setTest(res.data);
         setSecondsLeft((res.data?.durationMinutes || 0) * 60);
       })
-      .catch((e: any) => setError(e.message || "Failed to load test"));
+      .catch((e: any) => show(e.message || "Failed to load test", "error"));
 
     apiFetch<any>(`/questions?testId=${id}&approvalStatus=APPROVED`)
       .then((res) => setQuestions(res.data || []))
@@ -41,7 +41,7 @@ export default function TakeTestPage() {
       .then((res) => {
         const userRole = res.data?.role || "";
         if (userRole !== "USER") {
-          setError("Preview only. Activate the test to allow student attempts.");
+          show("Preview only. Activate the test to allow student attempts.", "error");
           return;
         }
         return apiFetch<any>("/attempts", {
@@ -49,8 +49,8 @@ export default function TakeTestPage() {
           body: JSON.stringify({ testId: id })
         }).then((res2) => setAttemptId(res2.data?._id || ""));
       })
-      .catch((e: any) => setError(e.message || "Unable to start attempt"));
-  }, [id]);
+      .catch((e: any) => show(e.message || "Unable to start attempt", "error"));
+  }, [id, show]);
 
   useEffect(() => {
     if (secondsLeft <= 0) return;
@@ -73,12 +73,12 @@ export default function TakeTestPage() {
 
   const submit = async (status: "SUBMITTED" | "TIMED_OUT") => {
     if (role && role !== "USER") {
-      setError("Only students can submit attempts.");
+      show("Only students can submit attempts.", "error");
       return;
     }
     if (submittedRef.current) return;
     if (!attemptId) {
-      setError("Attempt not initialized yet. Please wait a moment.");
+      show("Attempt not initialized yet. Please wait a moment.", "error");
       return;
     }
     submittedRef.current = true;
@@ -98,7 +98,7 @@ export default function TakeTestPage() {
       globalThis.location.href = `/results/${attemptId}`;
     } catch (e: any) {
       submittedRef.current = false;
-      setError(e.message || "Failed to submit attempt");
+      show(e.message || "Failed to submit attempt", "error");
     }
   };
 
@@ -161,7 +161,7 @@ export default function TakeTestPage() {
 
   const onSubmitClick = () => {
     if (!attemptId) {
-      setError("Attempt not initialized yet. Please wait a moment.");
+      show("Attempt not initialized yet. Please wait a moment.", "error");
       return;
     }
     if (globalThis.confirm("Submit your exam now? You will not be able to change answers.")) {
@@ -190,8 +190,6 @@ export default function TakeTestPage() {
             <div className="timer">{formatted}</div>
           </div>
         </header>
-
-        {error && <div className="alert alert-error">{error}</div>}
 
         <div className="exam-body">
           <aside className="exam-sidebar">

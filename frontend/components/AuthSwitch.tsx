@@ -1,11 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faFacebookF, faGoogle, faLinkedinIn } from "@fortawesome/free-brands-svg-icons";
 import { apiFetch, setToken, API_BASE } from "../lib/api";
+import { useToast } from "./ToastProvider";
 
 type Mode = "login" | "signup";
 
@@ -18,23 +19,27 @@ export function AuthSwitch({ initialMode = "login" }: Props) {
 
   const [loginEmail, setLoginEmail] = useState("");
   const [loginPassword, setLoginPassword] = useState("");
-  const [loginError, setLoginError] = useState("");
   const [loginLoading, setLoginLoading] = useState(false);
 
   const [signupName, setSignupName] = useState("");
   const [signupEmail, setSignupEmail] = useState("");
   const [signupPassword, setSignupPassword] = useState("");
-  const [signupError, setSignupError] = useState("");
-  const [signupMessage, setSignupMessage] = useState("");
 
   const router = useRouter();
+  const { show } = useToast();
+
+  useEffect(() => {
+    const token = globalThis.localStorage?.getItem("accessToken");
+    if (token) {
+      router.replace("/");
+    }
+  }, [router]);
 
   const startOAuth = (provider: "google" | "facebook" | "linkedin") => {
     globalThis.location.href = `${API_BASE}/auth/${provider}`;
   };
 
   const onLogin = async () => {
-    setLoginError("");
     setLoginLoading(true);
     try {
       const res = await apiFetch<{ user: { role: string }; accessToken: string }>("/auth/login", {
@@ -48,6 +53,7 @@ export function AuthSwitch({ initialMode = "login" }: Props) {
           const me = await apiFetch<{ role: string }>("/users/me");
           role = me.data?.role;
         }
+        show("Signed in successfully.", "success", 2500);
         if (role === "ADMIN" || role === "TEACHER") {
           router.replace("/admin/dashboard");
         } else {
@@ -55,24 +61,22 @@ export function AuthSwitch({ initialMode = "login" }: Props) {
         }
       }
     } catch (e: any) {
-      setLoginError(e.message || "Login failed");
+      show(e.message || "Login failed", "error");
     } finally {
       setLoginLoading(false);
     }
   };
 
   const onSignup = async () => {
-    setSignupError("");
-    setSignupMessage("");
     try {
       await apiFetch("/auth/register", {
         method: "POST",
         body: JSON.stringify({ name: signupName, email: signupEmail, password: signupPassword })
       });
-      setSignupMessage("Account created. You can login now.");
+      show("Account created. You can login now.", "success");
       setMode("login");
     } catch (e: any) {
-      setSignupError(e.message || "Signup failed");
+      show(e.message || "Signup failed", "error");
     }
   };
 
@@ -129,7 +133,6 @@ export function AuthSwitch({ initialMode = "login" }: Props) {
               <label className="label" htmlFor="login-password">Password</label>
               <input id="login-password" className="input" type="password" placeholder="••••••••" value={loginPassword} onChange={(e) => setLoginPassword(e.target.value)} />
               <Link className="auth-link" href="#">Forgot your password?</Link>
-              {loginError && <div className="alert alert-error">{loginError}</div>}
               <button type="button" className="btn btn-primary" onClick={onLogin} disabled={loginLoading}>
                 {loginLoading ? "Signing in..." : "Sign In"}
               </button>
@@ -142,8 +145,6 @@ export function AuthSwitch({ initialMode = "login" }: Props) {
               <input id="signup-email" className="input" type="email" placeholder="you@example.com" value={signupEmail} onChange={(e) => setSignupEmail(e.target.value)} />
               <label className="label" htmlFor="signup-password">Password</label>
               <input id="signup-password" className="input" type="password" placeholder="Create a strong password" value={signupPassword} onChange={(e) => setSignupPassword(e.target.value)} />
-              {signupError && <div className="alert alert-error">{signupError}</div>}
-              {signupMessage && <div className="alert alert-success">{signupMessage}</div>}
               <button type="button" className="btn btn-primary" onClick={onSignup}>Create Account</button>
             </div>
           )}

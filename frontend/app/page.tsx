@@ -1,7 +1,43 @@
+"use client";
+
 import Link from "next/link";
+import { useEffect, useState } from "react";
 import { NavBar } from "../components/NavBar";
+import { apiFetch } from "../lib/api";
 
 export default function Home() {
+  const [mounted, setMounted] = useState(false);
+  const [hasToken, setHasToken] = useState(() => {
+    if (globalThis.window === undefined) return false;
+    return !!globalThis.localStorage.getItem("accessToken");
+  });
+  const [dashboardPath, setDashboardPath] = useState("/student/dashboard");
+
+  useEffect(() => {
+    setMounted(true);
+    const readToken = () => setHasToken(!!globalThis.localStorage?.getItem("accessToken"));
+    readToken();
+    const onStorage = (event: StorageEvent) => {
+      if (event.key === "accessToken") readToken();
+    };
+    globalThis.addEventListener("storage", onStorage);
+    return () => globalThis.removeEventListener("storage", onStorage);
+  }, []);
+
+  useEffect(() => {
+    if (!hasToken) return;
+    apiFetch<{ role: string }>("/users/me")
+      .then((res) => {
+        const role = res.data?.role || "USER";
+        if (role === "ADMIN" || role === "TEACHER") {
+          setDashboardPath("/admin/dashboard");
+        } else {
+          setDashboardPath("/student/dashboard");
+        }
+      })
+      .catch(() => setDashboardPath("/student/dashboard"));
+  }, [hasToken]);
+
   return (
     <div className="page">
       <NavBar />
@@ -17,8 +53,15 @@ export default function Home() {
                 distraction‑free exam experience.
               </p>
               <div className="hero-actions">
-                <Link className="btn btn-primary" href="/auth/signup">Get Started</Link>
-                <Link className="btn btn-ghost" href="/auth/login">Login</Link>
+                {mounted && !hasToken && (
+                  <>
+                    <Link className="btn btn-primary" href="/auth/signup">Get Started</Link>
+                    <Link className="btn btn-ghost" href="/auth/login">Login</Link>
+                  </>
+                )}
+                {mounted && hasToken && (
+                  <Link className="btn btn-primary" href={dashboardPath}>Back to Dashboard</Link>
+                )}
               </div>
               <div className="trust-row">
                 <span>WCAG 2.1 AA</span>
@@ -138,8 +181,15 @@ export default function Home() {
               <p className="muted">Launch professional, secure exams in minutes.</p>
             </div>
             <div className="hero-actions">
-              <Link className="btn btn-primary" href="/auth/signup">Create Account</Link>
-              <Link className="btn btn-outline" href="/auth/login">Login</Link>
+              {mounted && !hasToken && (
+                <>
+                  <Link className="btn btn-primary" href="/auth/signup">Create Account</Link>
+                  <Link className="btn btn-outline" href="/auth/login">Login</Link>
+                </>
+              )}
+              {mounted && hasToken && (
+                <Link className="btn btn-primary" href={dashboardPath}>Back to Dashboard</Link>
+              )}
             </div>
           </div>
         </section>

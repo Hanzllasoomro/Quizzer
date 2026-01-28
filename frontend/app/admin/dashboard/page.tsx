@@ -5,9 +5,11 @@ import Link from "next/link";
 import { apiFetch } from "../../../lib/api";
 import { NavBar } from "../../../components/NavBar";
 import { RequireRole } from "../../../components/RequireRole";
+import { useToast } from "../../../components/ToastProvider";
 
 export default function AdminDashboard() {
   const [tests, setTests] = useState<any[]>([]);
+  const { show } = useToast();
 
   useEffect(() => {
     apiFetch<any[]>("/tests?page=1&limit=20")
@@ -20,8 +22,9 @@ export default function AdminDashboard() {
     try {
       await apiFetch(`/tests/${testId}`, { method: "DELETE" });
       setTests((prev) => prev.filter((t) => t._id !== testId));
+      show("Test deleted successfully", "success");
     } catch {
-      // ignore
+      show("Failed to delete test", "error");
     }
   };
 
