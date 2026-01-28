@@ -1,13 +1,13 @@
 import crypto from "node:crypto";
 import { v4 as uuid } from "uuid";
-import jwt from "jsonwebtoken";
+import jwt, { SignOptions } from "jsonwebtoken";
 import { config } from "../../config";
 
-const getRefreshExpiresIn = (role?: string) => {
+const getRefreshExpiresIn = (role?: string): SignOptions["expiresIn"] => {
   if (role === "ADMIN" && config.jwt.adminRefreshExpiresIn) {
-    return config.jwt.adminRefreshExpiresIn;
+    return config.jwt.adminRefreshExpiresIn as SignOptions["expiresIn"];
   }
-  return config.jwt.refreshExpiresIn;
+  return config.jwt.refreshExpiresIn as SignOptions["expiresIn"];
 };
 
 export const generateRefreshToken = (userId: string, role: string) => {
