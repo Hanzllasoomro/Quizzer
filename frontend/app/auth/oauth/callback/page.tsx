@@ -1,11 +1,11 @@
 "use client";
 
-import { useEffect, useMemo } from "react";
+import { Suspense, useEffect, useMemo } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { apiFetch, setToken } from "../../../../lib/api";
 import { useToast } from "../../../../components/ToastProvider";
 
-export default function OAuthCallbackPage() {
+function OAuthCallbackContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const { show } = useToast();
@@ -47,5 +47,24 @@ export default function OAuthCallbackPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function OAuthCallbackPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="auth-page">
+          <div className="auth-shell">
+            <div className="auth-card">
+              <strong>Signing you in…</strong>
+              <p className="muted">Please wait while we complete your login.</p>
+            </div>
+          </div>
+        </div>
+      }
+    >
+      <OAuthCallbackContent />
+    </Suspense>
   );
 }
