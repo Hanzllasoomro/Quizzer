@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
-import { apiFetch } from "../../../../lib/api";
+import { apiFetch, API_BASE, getToken } from "../../../../lib/api";
 import { NavBar } from "../../../../components/NavBar";
 import { RequireRole } from "../../../../components/RequireRole";
 import { useToast } from "../../../../components/ToastProvider";
@@ -81,6 +81,43 @@ export default function ManageTestPage() {
       globalThis.location.href = "/admin/dashboard";
     } catch (e: any) {
       show(e.message || "Failed to delete test", "error");
+    }
+  };
+
+  const onDownloadQuestions = async () => {
+    try {
+      const token = getToken();
+      const res = await fetch(`${API_BASE}/tests/${id}/questions-docx`, {
+        headers: token ? { Authorization: `Bearer ${token}` } : undefined
+      });
+      if (!res.ok) {
+        const text = await res.text();
+        let message = text;
+        try {
+          const json = text ? JSON.parse(text) : null;
+          message = json?.message || message;
+        } catch {
+          // ignore JSON parse errors
+        }
+        throw new Error(message || "Failed to download questions");
+      }
+
+      const blob = await res.blob();
+      const disposition = res.headers.get("content-disposition") || "";
+      const match = disposition.match(/filename="?([^";]+)"?/i);
+      const fallbackName = `${(title || "test").toLowerCase().replace(/[^a-z0-9]+/gi, "-").replace(/(^-|-$)/g, "") || "test"}-questions.docx`;
+      const filename = match?.[1] || fallbackName;
+
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      URL.revokeObjectURL(url);
+    } catch (e: any) {
+      show(e.message || "Failed to download questions", "error");
     }
   };
 
@@ -236,6 +273,9 @@ export default function ManageTestPage() {
             <button className="btn btn-primary" onClick={onSave}>Save Changes</button>
             <button className="btn btn-outline" type="button" onClick={() => globalThis.location.href = `/admin/tests/${id}/results`}>
               View Results
+            </button>
+            <button className="btn btn-outline" type="button" onClick={onDownloadQuestions}>
+              Download Questions (DOCX)
             </button>
             <button className="btn btn-danger-outline" onClick={onDelete}>Delete Test</button>
           </div>

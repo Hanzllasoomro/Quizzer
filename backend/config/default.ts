@@ -10,7 +10,7 @@ export const defaultConfig = {
   jwt: {
     accessSecret: process.env.JWT_ACCESS_SECRET || "change_me",
     refreshSecret: process.env.JWT_REFRESH_SECRET || "change_me",
-    accessExpiresIn: process.env.JWT_ACCESS_EXPIRES_IN || "5d",
+    accessExpiresIn: process.env.JWT_ACCESS_EXPIRES_IN || "7d",
     refreshExpiresIn: process.env.JWT_REFRESH_EXPIRES_IN || "30d",
     adminAccessExpiresIn: process.env.JWT_ADMIN_ACCESS_EXPIRES_IN || "30d",
     adminRefreshExpiresIn: process.env.JWT_ADMIN_REFRESH_EXPIRES_IN || "90d"

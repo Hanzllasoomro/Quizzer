@@ -25,3 +25,9 @@ export const findBankQuestions = (subject: string, difficulty: string, limit: nu
     },
     { $sample: { size: limit } }
   ]);
+
+export const findQuestionsByTestId = (testId: string, approvalStatus?: string) => {
+  const filter: any = { testId };
+  if (approvalStatus) filter.approvalStatus = approvalStatus;
+  return Question.find(filter).sort({ createdAt: 1 });
+};

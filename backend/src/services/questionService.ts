@@ -1,5 +1,5 @@
 import { ApiError } from "../utils/ApiError";
-import { createQuestion, updateQuestion, deleteQuestion, listQuestions, countQuestions, findBankQuestions } from "../repository/questionRepository";
+import { createQuestion, updateQuestion, deleteQuestion, listQuestions, countQuestions, findBankQuestions, findQuestionsByTestId } from "../repository/questionRepository";
 import { getPagination } from "../utils/pagination";
 import { Question } from "../models/Question";
 import { Test } from "../models/Test";
@@ -65,6 +65,12 @@ export const generateQuestionsForTest = async (testId: string, subject: string, 
   });
 
   return created;
+};
+
+export const listApprovedQuestionsForTest = async (testId: string) => {
+  const test = await Test.findById(testId);
+  if (!test) throw new ApiError(404, "Test not found");
+  return findQuestionsByTestId(testId, "APPROVED");
 };
 
 export const generateQuestionsFromDocument = async (

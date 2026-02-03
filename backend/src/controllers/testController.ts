@@ -3,6 +3,8 @@ import { asyncHandler } from "../utils/asyncHandler";
 import { sendResponse } from "../utils/response";
 import { AuthRequest } from "../middlewares/auth";
 import { createTestService, listTestsService, getTestById, updateTestService, deleteTestService } from "../services/testService";
+import { listApprovedQuestionsForTest } from "../services/questionService";
+import { buildQuestionsDocx } from "../utils/docx";
 
 export const createTestHandler = asyncHandler(async (req: AuthRequest, res: Response) => {
   const test = await createTestService({ ...req.body, createdBy: req.user!.id });
@@ -36,4 +38,28 @@ export const updateTestHandler = asyncHandler(async (req: AuthRequest, res: Resp
 export const deleteTestHandler = asyncHandler(async (req: AuthRequest, res: Response) => {
   await deleteTestService(req.params.id);
   return sendResponse(res, 200, undefined, "Test deleted");
+});
+
+export const exportTestQuestionsDocxHandler = asyncHandler(async (req: AuthRequest, res: Response) => {
+  const test = await getTestById(req.params.id);
+  const questions = await listApprovedQuestionsForTest(req.params.id);
+
+  const buffer = await buildQuestionsDocx(
+    {
+      title: test?.title,
+      subject: test?.subject,
+      durationMinutes: test?.durationMinutes
+    },
+    questions.map((q) => ({
+      text: q.text,
+      options: q.options
+    }))
+  );
+
+  const safeTitle = (test?.title || "test").toLowerCase().replace(/[^a-z0-9]+/gi, "-").replace(/(^-|-$)/g, "");
+  const filename = `${safeTitle || "test"}-questions.docx`;
+
+  res.setHeader("Content-Type", "application/vnd.openxmlformats-officedocument.wordprocessingml.document");
+  res.setHeader("Content-Disposition", `attachment; filename="${filename}"`);
+  res.status(200).send(buffer);
 });

@@ -3,7 +3,7 @@ import { z } from "zod";
 import { authenticate } from "../middlewares/auth";
 import { requireRole } from "../middlewares/requireRole";
 import { validate } from "../middlewares/validate";
-import { createTestHandler, listTestsHandler, getTestHandler, updateTestHandler, deleteTestHandler } from "../controllers/testController";
+import { createTestHandler, listTestsHandler, getTestHandler, updateTestHandler, deleteTestHandler, exportTestQuestionsDocxHandler } from "../controllers/testController";
 import { generateQuestionsHandler, generateQuestionsFromDocumentHandler, approveAiQuestionsHandler } from "../controllers/questionController";
 import { upload } from "../middlewares/upload";
 
@@ -42,6 +42,7 @@ const approveSchema = z.object({
 });
 
 router.get("/", authenticate, listTestsHandler);
+router.get("/:id/questions-docx", authenticate, requireRole("ADMIN"), exportTestQuestionsDocxHandler);
 router.get("/:id", authenticate, getTestHandler);
 router.post("/", authenticate, requireRole("ADMIN", "TEACHER"), validate(createSchema), createTestHandler);
 router.patch("/:id", authenticate, requireRole("ADMIN", "TEACHER"), validate(updateSchema), updateTestHandler);
