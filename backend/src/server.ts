@@ -5,6 +5,8 @@ import { config } from "../config";
 import { logger } from "./utils/logger";
 import { seedAdmin } from "./services/userService";
 
+const app = createApp();
+
 const start = async () => {
   try {
     await mongoose.connect(config.mongoUri);
@@ -12,10 +14,11 @@ const start = async () => {
 
     await seedAdmin();
 
-    const app = createApp();
-    app.listen(config.port, () => {
-      logger.info(`Server running on port ${config.port}`);
-    });
+    if (!process.env.VERCEL) {
+      app.listen(config.port, () => {
+        logger.info(`Server running on port ${config.port}`);
+      });
+    }
   } catch (err) {
     logger.error({ err }, "Startup failure");
     process.exit(1);
@@ -23,3 +26,5 @@ const start = async () => {
 };
 
 start();
+
+export default app;
